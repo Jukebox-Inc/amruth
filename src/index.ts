@@ -27,21 +27,34 @@ async function searchHexPackages(query: string): Promise<HexPackage[]> {
 }
 
 function parseMixExs(): Record<string, string> {
-  const result = execSync('mix deps | grep "locked at"', { encoding: "utf8" });
-  const deps: Record<string, string> = {};
+  try {
+    const result = execSync('mix deps | grep "locked at"', {
+      encoding: "utf8",
+    });
+    const deps: Record<string, string> = {};
 
-  result.split("\n").forEach((line) => {
-    // Handle cases with "locked at"
-    const match = line.match(/locked at\s+(\S+)\s+(\S+)/);
+    result.split("\n").forEach((line) => {
+      // Handle cases with "locked at"
+      const match = line.match(/locked at\s+(\S+)\s+(\S+)/);
 
-    if (match) {
-      const [_, version, nameWithParens] = match; // Capture the name with parentheses
-      var cleanedName = nameWithParens.replace("(", ""); // Remove parentheses
-      cleanedName = cleanedName.replace(")", "");
-      deps[cleanedName] = version;
+      if (match) {
+        const [_, version, nameWithParens] = match; // Capture the name with parentheses
+        var cleanedName = nameWithParens.replace("(", ""); // Remove parentheses
+        cleanedName = cleanedName.replace(")", "");
+        deps[cleanedName] = version;
+      }
+    });
+    return deps;
+  } catch (error: any) {
+    // Handle cases where `mix deps` fails or returns an empty result
+    if (error.stderr.includes("Could not find a Mix.Project")) {
+      console.info("No Mix.Project found in the current directory.");
+    } else {
+      console.info("Error executing `mix deps`:", error.message);
     }
-  });
-  return deps;
+
+    return {};
+  }
 }
 
 async function installPackages() {
