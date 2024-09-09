@@ -32,7 +32,7 @@ If a new version is available, then the option to upgrade it is also shown
 
 ![image](https://github.com/user-attachments/assets/15b98dd8-4e88-48f0-8ae9-b65eda66c892)
 
-After adding the file, the following commands are also run in succession 
+After adding the dependency to `mix.exs` file, the following commands are also run in succession 
 
 1. `mix format`
 2. `mix deps.get`
