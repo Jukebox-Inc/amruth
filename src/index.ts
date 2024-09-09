@@ -50,7 +50,7 @@ function parseMixExs(): Record<string, string> {
     if (error.stderr.includes("Could not find a Mix.Project")) {
       console.info("No Mix.Project found in the current directory.");
     } else {
-      console.info("Error executing `mix deps`:", error.message);
+      // console.info("Error executing `mix deps`:", error.message);
     }
 
     return {};
