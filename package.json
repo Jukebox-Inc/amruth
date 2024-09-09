@@ -1,0 +1,30 @@
+{
+  "name": "amruth",
+  "version": "1.0.0",
+  "description": "CLI to install exlixir dependencies",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.5.4",
+    "axios": "^1.7.7",
+    "commander": "^12.1.0",
+    "fast-levenshtein": "^3.0.0",
+    "inquirer": "^10.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  },
+  "bin": {
+    "amruth": "dist/index.js"
+  }
+}
