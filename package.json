@@ -1,6 +1,6 @@
 {
   "name": "amruth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI to install exlixir dependencies",
   "main": "index.js",
   "directories": {
