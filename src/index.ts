@@ -192,11 +192,11 @@ function addToMixExs(packages: HexPackage[]) {
 
 function formatAndFetchDeps() {
   try {
-    console.log("Running mix format...");
-    execSync("mix format", { stdio: "inherit" });
-
     console.log("Running mix deps.get...");
     execSync("mix deps.get", { stdio: "inherit" });
+
+    console.log("Running mix format...");
+    execSync("mix format", { stdio: "inherit" });
 
     console.log("Dependencies installed successfully.");
   } catch (error) {
