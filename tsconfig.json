@@ -9,9 +9,7 @@
     "allowJs": true,
     "checkJs": false,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "rootDir": "./src"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]

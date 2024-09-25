@@ -4,7 +4,7 @@ import * as path from "path";
 import axios from "axios";
 import inquirer from "inquirer";
 import { execSync } from "child_process";
-var levenshtein = require("fast-levenshtein");
+import levenshtein from "fast-levenshtein";
 
 const mixFilePath = path.join(process.cwd(), "mix.exs");
 

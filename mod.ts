@@ -31,28 +31,36 @@ async function searchHexPackages(query: string): Promise<HexPackage[]> {
  * Parses the mix.exs file to extract current dependencies and their versions.
  * @returns {Record<string, string>} An object with package names as keys and their versions as values.
  */
-function parseMixExs(): Record<string, string> {
+async function parseMixExs(): Promise<Record<string, string>> {
   try {
-    const result = new TextDecoder().decode(
-      Deno.runSync({ cmd: ["mix", "deps"], stdout: "piped" }).stdout,
-    );
+    const process = Deno.run({
+      cmd: ["sh", "-c", 'mix deps | grep "locked at"'],
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const output = await process.output();
+    const result = new TextDecoder().decode(output);
+
+    process.close();
+
     const deps: Record<string, string> = {};
 
     result.split("\n").forEach((line) => {
+      // Handle cases with "locked at"
       const match = line.match(/locked at\s+(\S+)\s+(\S+)/);
+
       if (match) {
-        const [_, version, nameWithParens] = match;
-        const cleanedName = nameWithParens.replace(/[()]/g, "");
+        const [_, version, nameWithParens] = match; // Capture the name with parentheses
+        let cleanedName = nameWithParens.replace("(", "").replace(")", ""); // Remove parentheses
         deps[cleanedName] = version;
       }
     });
+
     return deps;
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      console.info("No Mix.Project found in the current directory.");
-    } else {
-      console.info("Error executing `mix deps`:", error.message);
-    }
+    // Handle errors during command execution
+    console.error("Error executing mix deps:", error.message);
     return {};
   }
 }
@@ -63,7 +71,7 @@ function parseMixExs(): Record<string, string> {
  */
 async function installPackages() {
   const args = parse(Deno.args);
-  const query = args._[0] as string;
+  const query = args._[1] as string;
 
   if (!query) {
     console.error("Please provide a search term.");
@@ -76,7 +84,7 @@ async function installPackages() {
     return;
   }
 
-  const existingDeps = parseMixExs();
+  const existingDeps = await parseMixExs();
 
   // Categorize and sort the packages
   const categorizedPackages: HexPackage[] = packages.map((pkg) => {
