@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-
+/**
+ * This module provides functionality for managing Hex packages in Elixir projects.
+ * It includes functions for searching, installing, and upgrading Hex packages.
+ * @module
+ */
 import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
@@ -16,6 +20,11 @@ interface HexPackage {
   currentVersion?: string;
 }
 
+/**
+ * Searches for Hex packages based on the given query.
+ * @param {string} query - The search term for Hex packages.
+ * @returns {Promise<HexPackage[]>} A promise that resolves to an array of HexPackage objects.
+ */
 async function searchHexPackages(query: string): Promise<HexPackage[]> {
   const response = await axios.get(
     `https://hex.pm/api/packages?search=${query}`,
@@ -26,6 +35,10 @@ async function searchHexPackages(query: string): Promise<HexPackage[]> {
   }));
 }
 
+/**
+ * Parses the mix.exs file to extract current dependencies and their versions.
+ * @returns {Record<string, string>} An object with package names as keys and their versions as values.
+ */
 function parseMixExs(): Record<string, string> {
   try {
     const result = execSync('mix deps | grep "locked at"', {
@@ -57,6 +70,10 @@ function parseMixExs(): Record<string, string> {
   }
 }
 
+/**
+ * Main function to handle the installation of Hex packages.
+ * This function orchestrates the entire process of searching, selecting, and installing packages.
+ */
 async function installPackages() {
   const args = process.argv.slice(2);
   const query = args[1];
@@ -111,6 +128,12 @@ async function installPackages() {
     (pkg) => pkg.status === "installed",
   );
 
+  /**
+   * Calculates the relevance of a package name to the searched word.
+   * @param {string} name - The name of the package.
+   * @param {string} searchedWord - The word being searched for.
+   * @returns {number} A relevance score between 0 and 1.
+   */
   function calculateRelevance(name: string, searchedWord: string): number {
     // Use the Levenshtein distance algorithm to calculate similarity
     const distance = levenshtein.get(
@@ -131,7 +154,8 @@ async function installPackages() {
       disabled: true,
     })),
     ...upgradePackages.map((pkg) => ({
-      name: `${pkg.name} (current: ${pkg.currentVersion}) -> Upgrade to ${pkg.version}`,
+      name:
+        `${pkg.name} (current: ${pkg.currentVersion}) -> Upgrade to ${pkg.version}`,
       value: pkg,
     })),
     ...installablePackages.map((pkg) => ({
@@ -160,6 +184,10 @@ async function installPackages() {
   }
 }
 
+/**
+ * Adds selected packages to the mix.exs file.
+ * @param {HexPackage[]} packages - An array of selected HexPackage objects to be added or upgraded.
+ */
 function addToMixExs(packages: HexPackage[]) {
   let mixExsContent = fs.readFileSync(mixFilePath, "utf8");
   const depsRegex = /defp deps do\s*\[\s*/;
@@ -190,6 +218,9 @@ function addToMixExs(packages: HexPackage[]) {
   fs.writeFileSync(mixFilePath, mixExsContent, "utf8");
 }
 
+/**
+ * Formats the mix.exs file and fetches dependencies using mix commands.
+ */
 function formatAndFetchDeps() {
   try {
     console.log("Running mix deps.get...");
