@@ -1,5 +1,8 @@
 {
   "name": "@jobin/amruth",
-  "version": "1.0.7",
-  "exports": "./src/index.ts"
+  "version": "1.0.10",
+  "exports": "./mod.ts",
+  "tasks": {
+    "start": "deno run --allow-env --allow-read --allow-write --allow-net mod.ts pow"
+  }
 }

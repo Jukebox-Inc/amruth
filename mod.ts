@@ -1,17 +1,15 @@
-#!/usr/bin/env node
-import * as fs from "fs";
-import * as path from "path";
-import axios from "axios";
-import inquirer from "inquirer";
-import { execSync } from "child_process";
-var levenshtein = require("fast-levenshtein");
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run --allow-net
+import { ensureDir } from "jsr:@std/fs@^0.218.2";
+import { join } from "jsr:@std/path@^0.218.2";
+import { parse } from "jsr:@std/flags@^0.218.2";
+import { Checkbox } from "jsr:@cliffy/prompt@1.0.0-rc.5";
 
-const mixFilePath = path.join(process.cwd(), "mix.exs");
+const mixFilePath = join(Deno.cwd(), "mix.exs");
 
 interface HexPackage {
   name: string;
   version: string;
-  status?: string; // "upgrade" | "installed" | undefined
+  status?: "upgrade" | "installed" | undefined;
   currentVersion?: string;
 }
 
@@ -21,10 +19,9 @@ interface HexPackage {
  * @returns {Promise<HexPackage[]>} A promise that resolves to an array of HexPackage objects.
  */
 async function searchHexPackages(query: string): Promise<HexPackage[]> {
-  const response = await axios.get(
-    `https://hex.pm/api/packages?search=${query}`,
-  );
-  return response.data.map((pkg: any) => ({
+  const response = await fetch(`https://hex.pm/api/packages?search=${query}`);
+  const data = await response.json();
+  return data.map((pkg: any) => ({
     name: pkg.name,
     version: pkg.latest_version,
   }));
@@ -36,31 +33,26 @@ async function searchHexPackages(query: string): Promise<HexPackage[]> {
  */
 function parseMixExs(): Record<string, string> {
   try {
-    const result = execSync('mix deps | grep "locked at"', {
-      encoding: "utf8",
-    });
+    const result = new TextDecoder().decode(
+      Deno.runSync({ cmd: ["mix", "deps"], stdout: "piped" }).stdout,
+    );
     const deps: Record<string, string> = {};
 
     result.split("\n").forEach((line) => {
-      // Handle cases with "locked at"
       const match = line.match(/locked at\s+(\S+)\s+(\S+)/);
-
       if (match) {
-        const [_, version, nameWithParens] = match; // Capture the name with parentheses
-        var cleanedName = nameWithParens.replace("(", ""); // Remove parentheses
-        cleanedName = cleanedName.replace(")", "");
+        const [_, version, nameWithParens] = match;
+        const cleanedName = nameWithParens.replace(/[()]/g, "");
         deps[cleanedName] = version;
       }
     });
     return deps;
-  } catch (error: any) {
-    // Handle cases where `mix deps` fails or returns an empty result
-    if (error.stderr.includes("Could not find a Mix.Project")) {
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
       console.info("No Mix.Project found in the current directory.");
     } else {
-      // console.info("Error executing `mix deps`:", error.message);
+      console.info("Error executing `mix deps`:", error.message);
     }
-
     return {};
   }
 }
@@ -70,12 +62,12 @@ function parseMixExs(): Record<string, string> {
  * This function orchestrates the entire process of searching, selecting, and installing packages.
  */
 async function installPackages() {
-  const args = process.argv.slice(2);
-  const query = args[1];
+  const args = parse(Deno.args);
+  const query = args._[0] as string;
 
   if (!query) {
     console.error("Please provide a search term.");
-    process.exit(1);
+    Deno.exit(1);
   }
 
   const packages = await searchHexPackages(query);
@@ -115,32 +107,11 @@ async function installPackages() {
       const aRelevance = calculateRelevance(a.name, query);
       const bRelevance = calculateRelevance(b.name, query);
       if (aRelevance !== bRelevance) return bRelevance - aRelevance;
-
-      // Sort alphabetically as a tiebreaker
       return a.name.localeCompare(b.name);
     });
   const installedPackages = categorizedPackages.filter(
     (pkg) => pkg.status === "installed",
   );
-
-  /**
-   * Calculates the relevance of a package name to the searched word.
-   * @param {string} name - The name of the package.
-   * @param {string} searchedWord - The word being searched for.
-   * @returns {number} A relevance score between 0 and 1.
-   */
-  function calculateRelevance(name: string, searchedWord: string): number {
-    // Use the Levenshtein distance algorithm to calculate similarity
-    const distance = levenshtein.get(
-      name.toLowerCase(),
-      searchedWord.toLowerCase(),
-    );
-
-    // Convert distance to a relevance score (higher distance means lower relevance)
-    const relevance = 1 - distance / Math.max(name.length, searchedWord.length);
-
-    return relevance;
-  }
 
   const choices = [
     ...installedPackages.map((pkg) => ({
@@ -158,32 +129,76 @@ async function installPackages() {
     })),
   ];
 
-  const answers = await inquirer.prompt([
-    {
-      type: "checkbox",
-      name: "selectedPackages",
-      message: "Select packages to install/upgrade",
-      choices,
-      loop: false,
-    },
-  ]);
+  const selectedPackages = await Checkbox.prompt({
+    message: "Select packages to install/upgrade",
+    options: choices,
+    minOptions: 0,
+  });
 
-  if (answers.selectedPackages.length > 0) {
-    addToMixExs(answers.selectedPackages);
+  if (selectedPackages.length > 0) {
+    await addToMixExs(selectedPackages);
     console.log("Dependencies updated in mix.exs");
 
-    formatAndFetchDeps();
+    await formatAndFetchDeps();
   } else {
     console.log("No packages selected.");
   }
 }
 
 /**
+ * Calculates the Levenshtein distance between two strings.
+ * @param {string} a - The first string.
+ * @param {string} b - The second string.
+ * @returns {number} The Levenshtein distance between the two strings.
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1,
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Calculates the relevance of a package name to the searched word.
+ * @param {string} name - The name of the package.
+ * @param {string} searchedWord - The word being searched for.
+ * @returns {number} A relevance score between 0 and 1.
+ */
+function calculateRelevance(name: string, searchedWord: string): number {
+  const distance = levenshteinDistance(
+    name.toLowerCase(),
+    searchedWord.toLowerCase(),
+  );
+  return 1 - distance / Math.max(name.length, searchedWord.length);
+}
+
+/**
  * Adds selected packages to the mix.exs file.
  * @param {HexPackage[]} packages - An array of selected HexPackage objects to be added or upgraded.
  */
-function addToMixExs(packages: HexPackage[]) {
-  let mixExsContent = fs.readFileSync(mixFilePath, "utf8");
+async function addToMixExs(packages: HexPackage[]) {
+  let mixExsContent = await Deno.readTextFile(mixFilePath);
   const depsRegex = /defp deps do\s*\[\s*/;
 
   packages.forEach((pkg) => {
@@ -209,19 +224,21 @@ function addToMixExs(packages: HexPackage[]) {
     }
   });
 
-  fs.writeFileSync(mixFilePath, mixExsContent, "utf8");
+  await Deno.writeTextFile(mixFilePath, mixExsContent);
 }
 
 /**
  * Formats the mix.exs file and fetches dependencies using mix commands.
  */
-function formatAndFetchDeps() {
+async function formatAndFetchDeps() {
   try {
     console.log("Running mix deps.get...");
-    execSync("mix deps.get", { stdio: "inherit" });
+    const depsGet = Deno.run({ cmd: ["mix", "deps.get"] });
+    await depsGet.status();
 
     console.log("Running mix format...");
-    execSync("mix format", { stdio: "inherit" });
+    const format = Deno.run({ cmd: ["mix", "format"] });
+    await format.status();
 
     console.log("Dependencies installed successfully.");
   } catch (error) {
@@ -229,4 +246,6 @@ function formatAndFetchDeps() {
   }
 }
 
-installPackages();
+if (import.meta.main) {
+  await installPackages();
+}
