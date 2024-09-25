@@ -1,5 +1,3 @@
-# .github/workflows/publish.yml
-
 name: Publish
 
 on:
@@ -14,5 +12,28 @@ jobs:
       contents: read
       id-token: write # The OIDC ID token is used for authentication with JSR.
     steps:
-      - uses: actions/checkout@v4
-      - run: npx jsr publish
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensures full history is available for publishing
+          node-version: '20.x'
+        run: echo "✅ Repository checked out"
+
+      - name: Install dependencies
+        run: npm ci
+        run: echo "✅ Dependencies installed"
+
+      - name: Publish to JSR
+        run: npx jsr publish
+        run: echo "🚀 Published to JSR"
+
+      - name: Set up npm authentication
+        run: echo "//registry.npmjs.org/:_authToken=\${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        run: echo "🔑 NPM authentication configured"
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        run: echo "🚀 Published to npm"
+
+      - name: Confirm publication
+        run: echo "🎉 Publication to both JSR and npm completed successfully!"
