@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/**
- * This module provides functionality for managing Hex packages in Elixir projects.
- * It includes functions for searching, installing, and upgrading Hex packages.
- * @module
- */
 import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
@@ -154,8 +149,7 @@ async function installPackages() {
       disabled: true,
     })),
     ...upgradePackages.map((pkg) => ({
-      name:
-        `${pkg.name} (current: ${pkg.currentVersion}) -> Upgrade to ${pkg.version}`,
+      name: `${pkg.name} (current: ${pkg.currentVersion}) -> Upgrade to ${pkg.version}`,
       value: pkg,
     })),
     ...installablePackages.map((pkg) => ({
