@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import * as fs from "fs";
 import * as path from "path";
-import axios from "axios";
-import inquirer from "inquirer";
+import axios from "npm:axios";
+import inquirer from "npm:inquirer";
 import { execSync } from "child_process";
-var levenshtein = require("fast-levenshtein");
+import levenshtein from "npm:fast-levenshtein";
 
 const mixFilePath = path.join(process.cwd(), "mix.exs");
 
