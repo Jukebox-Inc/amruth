@@ -1,11 +1,16 @@
 # Amruth
+![NPM Version](https://img.shields.io/npm/v/amruth)  ![JSR Version](https://img.shields.io/jsr/v/%40jobin/amruth)
 
 CLI to install elixir dependencies with ease
 
 **Installation:**
 
 ```bash
+// For Node JS
 npm install -g amruth@latest
+
+// For Deno
+deno install -g jsr:@jobin/amruth --allow-env --allow-read --allow-write --allow-net --allow-run
 ```
 
 **Usage**
@@ -20,7 +25,11 @@ amruth <command> <options>
 amruth install pow
 ```
 
-![image](https://github.com/user-attachments/assets/3d05ca0b-324f-4115-a901-6ae026e49b36)
+| Node | Deno |
+|---|---|
+| ![image](https://github.com/user-attachments/assets/3d05ca0b-324f-4115-a901-6ae026e49b36) | ![image](https://github.com/user-attachments/assets/a9380b87-c2ae-4d9f-a57f-fb60dea5eb48) |
+
+
 
 > You can use ⬆️ ⬇️ keys to iterate the result and use Space to select, enter to
 > finalize
