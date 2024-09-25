@@ -25,6 +25,7 @@ jobs:
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
       - name: Publish to npm
         run: |
+          npx tsc
           npm publish --provenance --access public
           echo "Published to NPM"
       - name: Confirm publication
