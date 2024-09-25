@@ -27,7 +27,7 @@ amruth install pow
 
 | Node | Deno |
 |---|---|
-| ![image](https://github.com/user-attachments/assets/3d05ca0b-324f-4115-a901-6ae026e49b36) | ![image](https://github.com/user-attachments/assets/a9380b87-c2ae-4d9f-a57f-fb60dea5eb48) |
+| ![image](https://github.com/user-attachments/assets/ca25009e-7fb4-4330-b1be-b24b5bd70c8d) | ![image](https://github.com/user-attachments/assets/36ff235e-e24a-4737-a9ea-bdcb8e3471f5) |
 
 
 
@@ -37,11 +37,16 @@ amruth install pow
 Existing packages are displayed as disabled to avoid duplicate dependencies
 being listed in the `mix.exs` file
 
-![image](https://github.com/user-attachments/assets/7e12a705-0fbf-4db1-91cc-948d55c01e9c)
+| Node | Deno |
+|---|---|
+| ![image](https://github.com/user-attachments/assets/0485a69d-e700-459c-80ae-71446cfe8f61) | ![image](https://github.com/user-attachments/assets/19a9d932-4cb0-4cd3-ac7e-247f9e2e30fa) |
+
 
 If a new version is available, then the option to upgrade it is also shown
 
-![image](https://github.com/user-attachments/assets/15b98dd8-4e88-48f0-8ae9-b65eda66c892)
+| Node | Deno |
+|---|---|
+| ![image](https://github.com/user-attachments/assets/809d8e00-74ce-4d33-9f44-32af8ea6bda2) | ![image](https://github.com/user-attachments/assets/5d88870c-4270-4461-8813-8433b1a8a726) |
 
 After adding the dependency to `mix.exs` file, the following commands are also
 run in succession
